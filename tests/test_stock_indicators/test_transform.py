@@ -70,8 +70,8 @@ def test_atr_trailing_stop(shared_datadir: Path) -> None:
     )
 
 
-def test_missing_data() -> None:
-    adapter = BinanceAdapter(Path("../data"))
+def test_missing_data(shared_datadir: Path) -> None:
+    adapter = BinanceAdapter(shared_datadir)
     ohlcv = adapter.load_ohlcv(
         BinanceDataConfig(
             BinanceDataType.OHLCV,
