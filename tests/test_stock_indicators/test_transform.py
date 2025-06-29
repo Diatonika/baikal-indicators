@@ -65,8 +65,8 @@ def test_atr_trailing_stop(shared_datadir: Path) -> None:
         2019, 1, 1, 12, 30, tzinfo=datetime.UTC
     )
 
-    assert results["date_tine"].first() == datetime.datetime(
-        2019, 1, 30, 23, 59, tzinfo=datetime.UTC
+    assert results["date_time"].last() == datetime.datetime(
+        2019, 1, 31, 23, 59, tzinfo=datetime.UTC
     )
 
 
