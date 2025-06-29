@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 from pandera import Field
 from pandera.typing.polars import DataFrame
-from polars import Float64
+from polars import Float32, Float64
 from pydantic import BaseModel
 from stock_indicators import EndType, Quote, indicators
 
@@ -18,8 +18,8 @@ class ATRTrailingStopConfig(BaseModel):
 
 class ATRTrailingStopModel(TimeSeries):
     atr_stop: Float64 = Field(nullable=True)
-    atr_buy_stop: Float64 = Field(nullable=True)
-    atr_sell_stop: Float64 = Field(nullable=True)
+    atr_buy_stop: Float32 = Field(nullable=True)
+    atr_sell_stop: Float32 = Field(nullable=True)
 
 
 class ATRTrailingStop(Indicator[ATRTrailingStopConfig, ATRTrailingStopModel]):
@@ -33,7 +33,7 @@ class ATRTrailingStop(Indicator[ATRTrailingStopConfig, ATRTrailingStopModel]):
             {
                 "date_time": [value.date for value in results],
                 "atr_stop": [value.atr_stop for value in results],
-                "atr_buy_stop": [value.buy_stop for value in results],
-                "atr_sell_stop": [value.sell_stop for value in results],
+                "atr_buy_stop": [int(value.buy_stop is None) for value in results],
+                "atr_sell_stop": [int(value.sell_stop is None) for value in results],
             }
         )

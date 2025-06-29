@@ -13,8 +13,9 @@ from rich.progress import Progress
 
 from baikal.common.rich.progress import DateTimeColumn, TimeFraction
 from baikal.common.trade.models import OHLCV
-from baikal.indicators.stock_indicators.transform import to_quotes
+from baikal.indicators.stock_indicators._window_validator import validate_window
 from baikal.indicators.stock_indicators.indicator import Indicator
+from baikal.indicators.stock_indicators.transform import to_quotes
 
 
 class BatchIndicator:
@@ -77,33 +78,48 @@ class BatchIndicator:
         file_descriptor: TextIOWrapper | None,
         return_frame: bool,
     ) -> DataFrame[DataFrameModel] | None:
+        headers_published: bool = False
         aggregated_chunks: list[PolarDataFrame] = []
 
         min_date_time = cast(datetime.datetime, ohlcv["date_time"].min())
         max_date_time = cast(datetime.datetime, ohlcv["date_time"].max())
-        current_date_time = min_date_time
+        left_border = min_date_time
 
-        time_fraction = TimeFraction(min_date_time, max_date_time)
+        tracker = TimeFraction(min_date_time, max_date_time)
         task = progress.add_task(
-            f"Indicators on [{min_date_time}, {max_date_time})",
+            f"Indicators on [{min_date_time}, {max_date_time}]",
             current=min_date_time,
             target=max_date_time,
         )
 
-        while current_date_time < max_date_time:
+        while left_border <= max_date_time:
             progress.update(
                 task,
-                completed=time_fraction.fraction(current_date_time) * 100,
-                current=current_date_time,
+                completed=tracker.fraction(left_border) * 100,
+                current=left_border,
             )
 
-            warmup_border = current_date_time + warmup_period
-            window_border = warmup_border + window_size
+            warmup_border = left_border + warmup_period
+            window_border = left_border + window_size
 
             raw_chunk = ohlcv.filter(
-                col("date_time") >= current_date_time,
+                col("date_time") >= left_border,
                 col("date_time") < window_border,
             )
+
+            chunk = DataFrame[OHLCV](raw_chunk)
+            window_parameters = validate_window(
+                window_ohlcv=chunk,
+                start=left_border,
+                end=window_border,
+                warmup=warmup_period,
+            )
+
+            if window_parameters.valid_end <= warmup_border:
+                left_border = window_parameters.next_warmup
+                continue
+
+            raw_chunk = chunk.filter(col("date_time") < window_parameters.valid_end)
 
             chunk = DataFrame[OHLCV](raw_chunk)
             quotes = to_quotes(chunk)
@@ -112,23 +128,24 @@ class BatchIndicator:
             ]
 
             chunks = [chunk] + indicators_chunk
-            aggregated_chunk = concat(chunks, how="align_left")
-            if current_date_time != min_date_time:
-                aggregated_chunk = aggregated_chunk.filter(
-                    col("date_time") >= warmup_border,
-                )
+            aggregated_chunk = concat(chunks, how="align_left").filter(
+                col("date_time") >= warmup_border,
+            )
 
             if file_descriptor is not None:
                 aggregated_chunk.write_csv(
                     file_descriptor,
-                    include_header=current_date_time == min_date_time,
+                    include_header=not headers_published,
                 )
+
+                headers_published = True
 
             if return_frame is not None:
                 aggregated_chunks.append(aggregated_chunk)
 
-            current_date_time += window_size
+            left_border = window_parameters.next_warmup
 
+        progress.update(task, completed=100)
         return None if return_frame is None else DataFrame(concat(aggregated_chunks))
 
     @contextmanager
@@ -142,7 +159,7 @@ class BatchIndicator:
         if not save_path.exists():
             save_path.touch()
 
-        file_descriptor = save_path.open("w")
+        file_descriptor = save_path.open("w", encoding="utf-8")
 
         try:
             yield file_descriptor
