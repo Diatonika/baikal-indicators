@@ -5,19 +5,19 @@ requires = ["poetry-core"]
 [project]
 authors = [{ name = "Valery Ratsko", email = "<zitrasa@yandex.ru>" }]
 description = "Baikal Template Repository"
-name = "baikal-template"
+name = "baikal-indicators"
 version = "0.0.0"
 readme = "README.md"
 requires-python = ">= 3.12, < 3.14"
 
 dependencies = [
     "baikal-adapters (>= 0.3, < 1.0)",
-    "baikal-common (>= 0.11, < 1.0)",
+    "baikal-common (>= 0.13, < 1.0)",
     "dynaconf (>= 3.0, < 4.0)",
     "pandera[pandas, polars] (>= 0.24, < 1.0)",
     "polars (>= 1.0, < 2.0)",
     "pydantic (>= 2.0, < 3.0)",
-    "pythonnet (>= 3.0, < 4.0)",
+    "stock-indicators (>= 1.0, < 2.0)",
 ]
 
 [tool.poetry]
@@ -69,8 +69,6 @@ rust-just = "^1.0"
 mypy = "^1.0"
 ruff = "^0.9"
 
-quantconnect-stubs = "*"
-
 [tool.poetry.group.test.dependencies]
 pytest = "^8.0"
 pytest-datadir = "^1.0"
@@ -97,7 +95,7 @@ python_version = "3.12"
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["dynaconf", "pythonnet"]
+module = ["dynaconf", "stock_indicators"]
 ignore_missing_imports = true
 
 # Testing Tools
