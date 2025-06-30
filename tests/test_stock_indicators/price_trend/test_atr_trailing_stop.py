@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_trend import (
     ATRTrailingStop,
     ATRTrailingStopConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_atr_trailing_stop(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

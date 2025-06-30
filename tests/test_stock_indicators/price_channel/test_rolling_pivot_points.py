@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_channel import (
     RollingPivotPoints,
     RollingPivotPointsConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_rolling_pivot_points(

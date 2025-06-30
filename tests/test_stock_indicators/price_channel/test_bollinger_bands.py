@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_channel import (
     BollingerBands,
     BollingerBandsConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_bollinger_bands(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

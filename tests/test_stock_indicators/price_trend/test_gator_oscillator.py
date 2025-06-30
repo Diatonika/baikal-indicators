@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_trend import (
     GatorOscillator,
     GatorOscillatorConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_gator_oscillator(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

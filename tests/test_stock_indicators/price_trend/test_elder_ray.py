@@ -5,7 +5,7 @@ from pandera.typing.polars import DataFrame
 from baikal.common.trade.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator
 from baikal.indicators.stock_indicators.price_trend import ElderRay, ElderRayConfig
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_elder_ray(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

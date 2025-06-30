@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_trend import (
     HurstExponent,
     HurstExponentConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_hurst_exponent(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

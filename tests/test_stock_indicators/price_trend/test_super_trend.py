@@ -5,7 +5,7 @@ from pandera.typing.polars import DataFrame
 from baikal.common.trade.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator
 from baikal.indicators.stock_indicators.price_trend import SuperTrend, SuperTrendConfig
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_super_trend(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

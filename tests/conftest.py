@@ -14,7 +14,7 @@ from baikal.adapters.binance import (
     BinanceInstrumentType,
 )
 from baikal.common.trade.models import OHLCV
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 @pytest.fixture(scope="session")

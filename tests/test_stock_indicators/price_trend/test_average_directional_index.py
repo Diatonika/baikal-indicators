@@ -5,7 +5,7 @@ from pandera.typing.polars import DataFrame
 from baikal.common.trade.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator
 from baikal.indicators.stock_indicators.price_trend import ADX, ADXConfig
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_average_directional_index(

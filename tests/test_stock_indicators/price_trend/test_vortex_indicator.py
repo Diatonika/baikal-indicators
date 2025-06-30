@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_trend import (
     VortexIndicator,
     VortexIndicatorConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_vortex_indicator(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.oscillator import (
     StochasticRSI,
     StochasticRSIConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_stochastic_rsi(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

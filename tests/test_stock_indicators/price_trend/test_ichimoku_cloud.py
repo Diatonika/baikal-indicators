@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_trend import (
     IchimokuCloud,
     IchimokuCloudConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_ichimoku_cloud(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

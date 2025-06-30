@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_channel import (
     FractalChaosBands,
     FractalChaosBandsConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_fractal_chaos_bands(

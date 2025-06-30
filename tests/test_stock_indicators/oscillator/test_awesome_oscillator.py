@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.oscillator import (
     AwesomeOscillator,
     AwesomeOscillatorConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_awesome_oscillator(

@@ -5,7 +5,7 @@ from pandera.typing.polars import DataFrame
 from baikal.common.trade.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator
 from baikal.indicators.stock_indicators.oscillator import CMO, CMOConfig
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_cmo(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

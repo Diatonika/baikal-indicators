@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_channel import (
     DonchianChannels,
     DonchianChannelsConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_donchian_channels(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:

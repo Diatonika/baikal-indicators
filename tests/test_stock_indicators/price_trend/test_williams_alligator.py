@@ -8,7 +8,7 @@ from baikal.indicators.stock_indicators.price_trend import (
     WilliamsAlligator,
     WilliamsAlligatorConfig,
 )
-from tests.util import Assertions
+from tests.utility.assertions import Assertions
 
 
 def test_williams_alligator(
