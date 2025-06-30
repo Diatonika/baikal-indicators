@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
@@ -11,6 +12,7 @@ from pandera.typing.polars import DataFrame
 from polars import DataFrame as PolarDataFrame, col, concat
 from rich.progress import Progress
 
+from baikal.common.rich import with_handler
 from baikal.common.rich.progress import DateTimeColumn, TimeFraction
 from baikal.common.trade.models import OHLCV
 from baikal.indicators.stock_indicators._window_validator import validate_window
@@ -19,6 +21,8 @@ from baikal.indicators.stock_indicators.transform import to_quotes
 
 
 class BatchIndicator:
+    LOGGER = logging.getLogger(__name__)
+
     def __init__(self, indicators: Iterable[Indicator[Any, Any]]) -> None:
         self._indicators = tuple(indicators)
 
@@ -41,7 +45,7 @@ class BatchIndicator:
         window_size: datetime.timedelta,
         *,
         save_csv: Path | None = None,
-        return_frame: Literal[True],
+        return_frame: Literal[True] = True,
     ) -> DataFrame[DataFrameModel]: ...
 
     def calculate(
@@ -68,6 +72,7 @@ class BatchIndicator:
                 return_frame=return_frame,
             )
 
+    @with_handler(LOGGER)
     def _calculate(
         self,
         ohlcv: DataFrame[OHLCV],
@@ -131,6 +136,13 @@ class BatchIndicator:
             aggregated_chunk = concat(chunks, how="align_left").filter(
                 col("date_time") >= warmup_border,
             )
+
+            if aggregated_chunk.null_count().sum_horizontal().item():
+                self.LOGGER.warning(
+                    f"Indicator chunk contains null values. "
+                    f"Hint: increase warmup period.\n"
+                    f"{aggregated_chunk.filter(col('*').is_null().any())}"
+                )
 
             if file_descriptor is not None:
                 aggregated_chunk.write_csv(

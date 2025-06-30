@@ -1,6 +1,5 @@
 from collections.abc import Iterable
 
-from pandera import Field
 from pandera.typing.polars import DataFrame
 from polars import Float32, Float64
 from pydantic import BaseModel
@@ -17,9 +16,9 @@ class ATRTrailingStopConfig(BaseModel):
 
 
 class ATRTrailingStopModel(TimeSeries):
-    atr_stop: Float64 = Field(nullable=True)
-    atr_buy_stop: Float32 = Field(nullable=True)
-    atr_sell_stop: Float32 = Field(nullable=True)
+    atr_stop: Float64
+    atr_buy_stop: Float32
+    atr_sell_stop: Float32
 
 
 class ATRTrailingStop(Indicator[ATRTrailingStopConfig, ATRTrailingStopModel]):
@@ -28,7 +27,10 @@ class ATRTrailingStop(Indicator[ATRTrailingStopConfig, ATRTrailingStopModel]):
         return ATRTrailingStopModel
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ATRTrailingStopModel]:
-        results = indicators.get_atr_stop(quotes, **self._config.model_dump())
+        results = indicators.get_atr_stop(
+            quotes, **self._config.model_dump()
+        ).remove_warmup_periods()
+
         return DataFrame[ATRTrailingStopModel](
             {
                 "date_time": [value.date for value in results],

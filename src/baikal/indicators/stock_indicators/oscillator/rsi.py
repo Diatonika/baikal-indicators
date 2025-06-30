@@ -1,0 +1,35 @@
+from collections.abc import Iterable
+
+from pandera.typing.polars import DataFrame
+from polars import Float64
+from pydantic import BaseModel
+from stock_indicators import Quote, indicators
+
+from baikal.common.trade.models import TimeSeries
+from baikal.indicators.stock_indicators import Indicator
+
+
+class RSIConfig(BaseModel):
+    lookback_periods: int = 14
+
+
+class RSIModel(TimeSeries):
+    rsi: Float64
+
+
+class RSI(Indicator[RSIConfig, RSIModel]):
+    @classmethod
+    def model(cls) -> type[RSIModel]:
+        return RSIModel
+
+    def calculate(self, quotes: Iterable[Quote]) -> DataFrame[RSIModel]:
+        results = indicators.get_rsi(
+            quotes, **self._config.model_dump()
+        ).remove_warmup_periods()
+
+        return DataFrame[RSIModel](
+            {
+                "date_time": [value.date for value in results],
+                "rsi": [value.rsi for value in results],
+            }
+        )

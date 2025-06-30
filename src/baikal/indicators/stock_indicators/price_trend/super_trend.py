@@ -1,0 +1,44 @@
+from collections.abc import Iterable
+
+from pandera.typing.polars import DataFrame
+from polars import Float32, Float64
+from pydantic import BaseModel
+from stock_indicators import Quote, indicators
+
+from baikal.common.trade.models import TimeSeries
+from baikal.indicators.stock_indicators import Indicator
+
+
+class SuperTrendConfig(BaseModel):
+    lookback_periods: int = 10
+    multiplier: float = 3.0
+
+
+class SuperTrendModel(TimeSeries):
+    super_trend: Float64
+    super_trend_upper: Float32
+    super_trend_lower: Float32
+
+
+class SuperTrend(Indicator[SuperTrendConfig, SuperTrendModel]):
+    @classmethod
+    def model(cls) -> type[SuperTrendModel]:
+        return SuperTrendModel
+
+    def calculate(self, quotes: Iterable[Quote]) -> DataFrame[SuperTrendModel]:
+        results = indicators.get_super_trend(
+            quotes, **self._config.model_dump()
+        ).remove_warmup_periods()
+
+        return DataFrame[SuperTrendModel](
+            {
+                "date_time": [value.date for value in results],
+                "super_trend": [value.super_trend for value in results],
+                "super_trend_upper": [
+                    int(value.upper_band is None) for value in results
+                ],
+                "super_trend_lower": [
+                    int(value.lower_band is None) for value in results
+                ],
+            }
+        )

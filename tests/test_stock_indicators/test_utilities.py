@@ -2,6 +2,8 @@ import datetime
 
 from pathlib import Path
 
+from pandera.typing.polars import DataFrame
+
 from baikal.adapters.binance import (
     BinanceAdapter,
     BinanceDataConfig,
@@ -9,6 +11,7 @@ from baikal.adapters.binance import (
     BinanceDataType,
     BinanceInstrumentType,
 )
+from baikal.common.trade.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator, to_quotes
 from baikal.indicators.stock_indicators.price_trend import (
     ATRTrailingStop,
@@ -16,62 +19,13 @@ from baikal.indicators.stock_indicators.price_trend import (
 )
 
 
-def test_to_quotes(shared_datadir: Path) -> None:
-    adapter = BinanceAdapter(shared_datadir)
-    ohlcv = adapter.load_ohlcv(
-        BinanceDataConfig(
-            BinanceDataType.OHLCV,
-            BinanceInstrumentType.SPOT,
-            BinanceDataInterval.ONE_MINUTE,
-            "BTCUSDT",
-        ),
-        datetime.datetime(2019, 1, 1, tzinfo=datetime.UTC),
-        datetime.datetime(2019, 2, 1, tzinfo=datetime.UTC),
-    )
-
-    print(ohlcv)
-
-    quotes = to_quotes(ohlcv)
+def test_to_quotes(ohlcv_month: DataFrame[OHLCV]) -> None:
+    quotes = to_quotes(ohlcv_month)
     assert len(quotes) == 44_640
 
 
-def test_atr_trailing_stop(shared_datadir: Path) -> None:
-    adapter = BinanceAdapter(shared_datadir)
-    ohlcv = adapter.load_ohlcv(
-        BinanceDataConfig(
-            BinanceDataType.OHLCV,
-            BinanceInstrumentType.SPOT,
-            BinanceDataInterval.ONE_MINUTE,
-            "BTCUSDT",
-        ),
-        datetime.datetime(2019, 1, 1, tzinfo=datetime.UTC),
-        datetime.datetime(2019, 2, 1, tzinfo=datetime.UTC),
-    )
-
-    atr_trailing_stop = ATRTrailingStop(ATRTrailingStopConfig())
-    batch_indicator = BatchIndicator([atr_trailing_stop])
-
-    results = batch_indicator.calculate(
-        ohlcv,
-        warmup_period=datetime.timedelta(minutes=750),
-        window_size=datetime.timedelta(minutes=10000),
-        return_frame=True,
-    )
-
-    assert results.null_count().sum_horizontal().item() == 0
-    assert results["date_time"].len() == 43_890
-
-    assert results["date_time"].first() == datetime.datetime(
-        2019, 1, 1, 12, 30, tzinfo=datetime.UTC
-    )
-
-    assert results["date_time"].last() == datetime.datetime(
-        2019, 1, 31, 23, 59, tzinfo=datetime.UTC
-    )
-
-
-def test_missing_data(shared_datadir: Path) -> None:
-    adapter = BinanceAdapter(shared_datadir)
+def test_batch_indicator_missing_data(global_datadir: Path) -> None:
+    adapter = BinanceAdapter(global_datadir)
     ohlcv = adapter.load_ohlcv(
         BinanceDataConfig(
             BinanceDataType.OHLCV,
