@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from pandera.typing.polars import DataFrame
-from util import Assertions
 
 from baikal.adapters.binance import (
     BinanceAdapter,
@@ -15,6 +14,7 @@ from baikal.adapters.binance import (
     BinanceInstrumentType,
 )
 from baikal.common.trade.models import OHLCV
+from tests.util import Assertions
 
 
 @pytest.fixture(scope="session")

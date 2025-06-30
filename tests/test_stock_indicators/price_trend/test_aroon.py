@@ -1,11 +1,11 @@
 import datetime
 
 from pandera.typing.polars import DataFrame
-from util import Assertions
 
 from baikal.common.trade.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator
 from baikal.indicators.stock_indicators.price_trend import Aroon, AroonConfig
+from tests.util import Assertions
 
 
 def test_aroon(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:
