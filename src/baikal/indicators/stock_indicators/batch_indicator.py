@@ -150,7 +150,7 @@ class BatchIndicator:
                 )
 
             if writer is not None:
-                writer.write(aggregated_chunk)
+                writer.write(TimeSeries.validate(aggregated_chunk))
 
             if return_frame is not None:
                 aggregated_chunks.append(aggregated_chunk)
