@@ -3,18 +3,20 @@ import logging
 
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
-from io import TextIOWrapper
 from pathlib import Path
 from typing import Any, Literal, cast, overload
 
-from pandera.polars import DataFrameModel
 from pandera.typing.polars import DataFrame
 from polars import DataFrame as PolarDataFrame, col, concat
 from rich.progress import Progress
 
 from baikal.common.rich import with_handler
 from baikal.common.rich.progress import DateTimeColumn, TimeFraction
-from baikal.common.trade.models import OHLCV
+from baikal.common.trade.models import OHLCV, TimeSeries
+from baikal.common.trade.parquet import (
+    ParquetTimeSeriesPartition,
+    ParquetTimeSeriesWriter,
+)
 from baikal.indicators.stock_indicators._window_validator import validate_window
 from baikal.indicators.stock_indicators.indicator import Indicator
 from baikal.indicators.stock_indicators.transform import to_quotes
@@ -30,10 +32,11 @@ class BatchIndicator:
     def calculate(
         self,
         ohlcv: DataFrame[OHLCV],
+        interval: datetime.timedelta | str,
         warmup_period: datetime.timedelta,
         window_size: datetime.timedelta,
         *,
-        save_csv: Path | None = None,
+        parquet_path: Path | None = None,
         return_frame: Literal[False],
     ) -> None: ...
 
@@ -41,34 +44,37 @@ class BatchIndicator:
     def calculate(
         self,
         ohlcv: DataFrame[OHLCV],
+        interval: datetime.timedelta | str,
         warmup_period: datetime.timedelta,
         window_size: datetime.timedelta,
         *,
-        save_csv: Path | None = None,
+        parquet_path: Path | None = None,
         return_frame: Literal[True] = True,
-    ) -> DataFrame[DataFrameModel]: ...
+    ) -> PolarDataFrame: ...
 
     def calculate(
         self,
         ohlcv: DataFrame[OHLCV],
+        interval: datetime.timedelta | str,
         warmup_period: datetime.timedelta,
         window_size: datetime.timedelta,
         *,
-        save_csv: Path | None = None,
+        parquet_path: Path | None = None,
         return_frame: bool = True,
-    ) -> DataFrame[DataFrameModel] | None:
-        if save_csv is None and return_frame is False:
-            error = "`save_csv` or `return_frame` must be set."
+    ) -> PolarDataFrame | None:
+        if parquet_path is None and return_frame is False:
+            error = "`parquet_path` or `return_frame` must be set."
             raise ValueError(error)
 
         progress = Progress(*Progress.get_default_columns(), DateTimeColumn("%Y-%m-%d"))
-        with progress, self._with_file(save_csv) as file_descriptor:
+        with progress, self._with_writer(parquet_path) as writer:
             return self._calculate(
                 ohlcv,
+                interval,
                 warmup_period,
                 window_size,
                 progress=progress,
-                file_descriptor=file_descriptor,
+                writer=writer,
                 return_frame=return_frame,
             )
 
@@ -76,14 +82,14 @@ class BatchIndicator:
     def _calculate(
         self,
         ohlcv: DataFrame[OHLCV],
+        interval: datetime.timedelta | str,
         warmup_period: datetime.timedelta,
         window_size: datetime.timedelta,
         *,
         progress: Progress,
-        file_descriptor: TextIOWrapper | None,
+        writer: ParquetTimeSeriesWriter[TimeSeries] | None,
         return_frame: bool,
-    ) -> DataFrame[DataFrameModel] | None:
-        headers_published: bool = False
+    ) -> PolarDataFrame | None:
         aggregated_chunks: list[PolarDataFrame] = []
 
         min_date_time = cast(datetime.datetime, ohlcv["date_time"].min())
@@ -97,6 +103,7 @@ class BatchIndicator:
             target=max_date_time,
         )
 
+        nullable_ohlcv = ohlcv.upsample("date_time", every=interval)
         while left_border <= max_date_time:
             progress.update(
                 task,
@@ -107,14 +114,11 @@ class BatchIndicator:
             warmup_border = left_border + warmup_period
             window_border = left_border + window_size
 
-            raw_chunk = ohlcv.filter(
-                col("date_time") >= left_border,
-                col("date_time") < window_border,
-            )
+            nullable_ohlcv = nullable_ohlcv.filter(col("date_time") >= left_border)
+            nullable_chunk = nullable_ohlcv.filter(col("date_time") < window_border)
 
-            chunk = DataFrame[OHLCV](raw_chunk)
             window_parameters = validate_window(
-                window_ohlcv=chunk,
+                window_nullable_ohlcv=nullable_chunk,
                 start=left_border,
                 end=window_border,
                 warmup=warmup_period,
@@ -124,9 +128,10 @@ class BatchIndicator:
                 left_border = window_parameters.next_warmup
                 continue
 
-            raw_chunk = chunk.filter(col("date_time") < window_parameters.valid_end)
+            chunk = DataFrame[OHLCV](
+                nullable_chunk.filter(col("date_time") < window_parameters.valid_end)
+            )
 
-            chunk = DataFrame[OHLCV](raw_chunk)
             quotes = to_quotes(chunk)
             indicators_chunk = [
                 indicator.calculate(quotes) for indicator in self._indicators
@@ -144,13 +149,8 @@ class BatchIndicator:
                     f"{aggregated_chunk.filter(col('*').is_null().any())}"
                 )
 
-            if file_descriptor is not None:
-                aggregated_chunk.write_csv(
-                    file_descriptor,
-                    include_header=not headers_published,
-                )
-
-                headers_published = True
+            if writer is not None:
+                writer.write(aggregated_chunk)
 
             if return_frame is not None:
                 aggregated_chunks.append(aggregated_chunk)
@@ -158,22 +158,21 @@ class BatchIndicator:
             left_border = window_parameters.next_warmup
 
         progress.update(task, completed=100)
-        return None if return_frame is None else DataFrame(concat(aggregated_chunks))
+        return None if return_frame is None else concat(aggregated_chunks)
 
     @contextmanager
-    def _with_file(
-        self, save_path: Path | None
-    ) -> Generator[TextIOWrapper | None, None, None]:
-        if save_path is None:
+    def _with_writer(
+        self, parquet_path: Path | None
+    ) -> Generator[ParquetTimeSeriesWriter[TimeSeries] | None, None, None]:
+        if parquet_path is None:
             yield None
             return None
 
-        if not save_path.exists():
-            save_path.touch()
+        writer = ParquetTimeSeriesWriter[TimeSeries](
+            parquet_path, ParquetTimeSeriesPartition.MONTH
+        )
 
-        file_descriptor = save_path.open("w", encoding="utf-8")
+        with writer:
+            yield writer
 
-        try:
-            yield file_descriptor
-        finally:
-            file_descriptor.close()
+        return None

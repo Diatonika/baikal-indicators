@@ -1,13 +1,12 @@
 import datetime
 
-from pandera.polars import DataFrameModel
-from pandera.typing.polars import DataFrame
+from polars import DataFrame as PolarDataFrame
 
 
 class Assertions:
     @staticmethod
     def day_test_assertions(
-        actual: DataFrame[DataFrameModel],
+        actual: PolarDataFrame,
         warmup: datetime.timedelta = datetime.timedelta(minutes=750),
     ) -> None:
         assert actual.null_count().sum_horizontal().item() == 0

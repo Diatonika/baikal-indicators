@@ -6,14 +6,14 @@ import pytest
 
 from pandera.typing.polars import DataFrame
 
-from baikal.adapters.binance import (
-    BinanceAdapter,
+from baikal.common.trade.models import OHLCV
+from baikal.converters.binance import (
+    BinanceConverter,
     BinanceDataConfig,
     BinanceDataInterval,
     BinanceDataType,
     BinanceInstrumentType,
 )
-from baikal.common.trade.models import OHLCV
 from tests.utility.assertions import Assertions
 
 
@@ -24,8 +24,8 @@ def global_datadir() -> Path:
 
 @pytest.fixture(scope="session")
 def ohlcv_day(global_datadir: Path) -> DataFrame[OHLCV]:
-    adapter = BinanceAdapter(global_datadir)
-    return adapter.load_ohlcv(
+    converter = BinanceConverter(global_datadir)
+    ohlcv = converter.load_ohlcv(
         BinanceDataConfig(
             BinanceDataType.OHLCV,
             BinanceInstrumentType.SPOT,
@@ -36,11 +36,13 @@ def ohlcv_day(global_datadir: Path) -> DataFrame[OHLCV]:
         datetime.datetime(2019, 1, 2, tzinfo=datetime.UTC),
     )
 
+    return DataFrame[OHLCV](ohlcv.collect())
+
 
 @pytest.fixture(scope="session")
 def ohlcv_month(global_datadir: Path) -> DataFrame[OHLCV]:
-    adapter = BinanceAdapter(global_datadir)
-    return adapter.load_ohlcv(
+    converter = BinanceConverter(global_datadir)
+    ohlcv = converter.load_ohlcv(
         BinanceDataConfig(
             BinanceDataType.OHLCV,
             BinanceInstrumentType.SPOT,
@@ -50,6 +52,8 @@ def ohlcv_month(global_datadir: Path) -> DataFrame[OHLCV]:
         datetime.datetime(2019, 1, 1, tzinfo=datetime.UTC),
         datetime.datetime(2019, 2, 1, tzinfo=datetime.UTC),
     )
+
+    return DataFrame[OHLCV](ohlcv.collect())
 
 
 @pytest.fixture(scope="session")

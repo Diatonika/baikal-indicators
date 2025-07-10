@@ -17,6 +17,7 @@ def test_keltner_channels(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -
 
     results = batch_indicator.calculate(
         ohlcv_day,
+        "1m",
         warmup_period=datetime.timedelta(minutes=750),
         window_size=datetime.timedelta(minutes=10000),
     )

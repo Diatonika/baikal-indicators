@@ -2,10 +2,7 @@ from datetime import datetime, timedelta
 from typing import cast
 
 from attrs import define
-from pandera.typing.polars import DataFrame
-from polars import Expr, col
-
-from baikal.common.trade.models import OHLCV
+from polars import DataFrame as PolarDataFrame, Expr, col
 
 
 @define
@@ -15,14 +12,14 @@ class WindowParameters:
 
 
 def validate_window(
-    window_ohlcv: DataFrame[OHLCV],
+    window_nullable_ohlcv: PolarDataFrame,
     start: datetime,
     end: datetime,
     warmup: timedelta,
 ) -> WindowParameters:
-    assert window_ohlcv["date_time"].len()
+    assert window_nullable_ohlcv["date_time"].len()
 
-    segmented = window_ohlcv.with_columns(valid=_is_ohlcv_valid())
+    segmented = window_nullable_ohlcv.with_columns(valid=_is_ohlcv_valid())
     segmented = segmented.with_columns(segment_id=col("valid").rle_id())
 
     first_segment = segmented.filter(segment_id=0)

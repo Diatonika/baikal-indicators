@@ -14,6 +14,7 @@ def test_super_trend(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> Non
 
     results = batch_indicator.calculate(
         ohlcv_day,
+        "1m",
         warmup_period=datetime.timedelta(minutes=750),
         window_size=datetime.timedelta(minutes=10000),
     )

@@ -16,6 +16,7 @@ def test_average_directional_index(
 
     results = indicator.calculate(
         ohlcv_day,
+        "1m",
         warmup_period=datetime.timedelta(minutes=750),
         window_size=datetime.timedelta(minutes=10000),
     )
