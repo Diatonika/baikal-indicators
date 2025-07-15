@@ -84,6 +84,7 @@ def test_batch_indicator(tmp_path: Path, global_datadir: Path) -> None:
     _asserts(memory_results)
     _asserts(read_parquet(tmp_path / "parquet"))
 
+
 def test_batch_indicator_metadata() -> None:
     atr_trailing_stop = ATRTrailingStop(ATRTrailingStopConfig())
     adx = ADX(ADXConfig())
