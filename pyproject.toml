@@ -5,13 +5,20 @@ requires = ["poetry-core"]
 [project]
 authors = [{ name = "Valery Ratsko", email = "<zitrasa@yandex.ru>" }]
 description = "Baikal Template Repository"
-name = "baikal-template"
+name = "baikal-indicators"
 version = "0.0.0"
 readme = "README.md"
-requires-python = ">= 3.12, < 4.0"
+requires-python = ">= 3.12, < 3.14"
 
 dependencies = [
+    "attrs (>= 25.0, < 26.0)",
+    "baikal-converters (>= 0.4, < 1.0)",
+    "baikal-common (>= 0.14, < 1.0)",
     "dynaconf (>= 3.0, < 4.0)",
+    "pandera[pandas, polars] (>= 0.24, < 1.0)",
+    "polars (>= 1.0, < 2.0)",
+    "pydantic (>= 2.0, < 3.0)",
+    "stock-indicators (>= 1.0, < 2.0)",
 ]
 
 [tool.poetry]
@@ -22,6 +29,10 @@ exclude = [
 packages = [
     { include = "baikal", from = "src" }
 ]
+
+[tool.poetry.dependencies]
+baikal-converters = { source = "baikal-pypi" }
+baikal-common = { source = "baikal-pypi" }
 
 # Semantic Release Settings
 
@@ -85,7 +96,7 @@ python_version = "3.12"
 strict = true
 
 [[tool.mypy.overrides]]
-module = "dynaconf"
+module = ["dynaconf", "stock_indicators"]
 ignore_missing_imports = true
 
 # Testing Tools
