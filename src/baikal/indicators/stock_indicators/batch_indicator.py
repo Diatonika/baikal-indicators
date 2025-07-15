@@ -18,7 +18,7 @@ from baikal.common.trade.parquet import (
     ParquetTimeSeriesWriter,
 )
 from baikal.indicators.stock_indicators._window_validator import validate_window
-from baikal.indicators.stock_indicators.indicator import Indicator
+from baikal.indicators.stock_indicators.indicator import FieldMetadata, Indicator
 from baikal.indicators.stock_indicators.transform import to_quotes
 
 
@@ -27,6 +27,13 @@ class BatchIndicator:
 
     def __init__(self, indicators: Iterable[Indicator[Any, Any]]) -> None:
         self._indicators = tuple(indicators)
+
+    def metadata(self) -> dict[str, FieldMetadata]:
+        metadata: dict[str, FieldMetadata] = {}
+        for indicator in self._indicators:
+            metadata.update(indicator.metadata())
+
+        return metadata
 
     @overload
     def calculate(

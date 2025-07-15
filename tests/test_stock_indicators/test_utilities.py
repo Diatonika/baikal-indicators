@@ -15,6 +15,8 @@ from baikal.converters.binance import (
 )
 from baikal.indicators.stock_indicators import BatchIndicator, to_quotes
 from baikal.indicators.stock_indicators.price_trend import (
+    ADX,
+    ADXConfig,
     ATRTrailingStop,
     ATRTrailingStopConfig,
 )
@@ -81,3 +83,11 @@ def test_batch_indicator(tmp_path: Path, global_datadir: Path) -> None:
 
     _asserts(memory_results)
     _asserts(read_parquet(tmp_path / "parquet"))
+
+def test_batch_indicator_metadata() -> None:
+    atr_trailing_stop = ATRTrailingStop(ATRTrailingStopConfig())
+    adx = ADX(ADXConfig())
+
+    batch_indicator = BatchIndicator([atr_trailing_stop, adx])
+
+    assert batch_indicator.metadata() == atr_trailing_stop.metadata() | adx.metadata()
