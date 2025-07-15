@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class SchaffTrendCycleConfig(BaseModel):
@@ -16,13 +16,19 @@ class SchaffTrendCycleConfig(BaseModel):
 
 
 class SchaffTrendCycleModel(TimeSeries):
-    schaff_trend_cycle: Float64
+    schaff_trend_cycle: Float64  # [0; 1]
 
 
 class SchaffTrendCycle(Indicator[SchaffTrendCycleConfig, SchaffTrendCycleModel]):
     @classmethod
     def model(cls) -> type[SchaffTrendCycleModel]:
         return SchaffTrendCycleModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "schaff_trend_cycle": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[SchaffTrendCycleModel]:
         results = indicators.get_stc(
@@ -32,6 +38,6 @@ class SchaffTrendCycle(Indicator[SchaffTrendCycleConfig, SchaffTrendCycleModel])
         return DataFrame[SchaffTrendCycleModel](
             {
                 "date_time": [value.date for value in results],
-                "schaff_trend_cycle": [value.stc for value in results],
+                "schaff_trend_cycle": [value.stc / 100 for value in results],
             }
         )

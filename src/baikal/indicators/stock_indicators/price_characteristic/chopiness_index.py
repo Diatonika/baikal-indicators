@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class ChopinessIndexConfig(BaseModel):
@@ -14,13 +14,19 @@ class ChopinessIndexConfig(BaseModel):
 
 
 class ChopinessIndexModel(TimeSeries):
-    chop: Float64
+    chop: Float64  # [0; 1]
 
 
 class ChopinessIndex(Indicator[ChopinessIndexConfig, ChopinessIndexModel]):
     @classmethod
     def model(cls) -> type[ChopinessIndexModel]:
         return ChopinessIndexModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "chop": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ChopinessIndexModel]:
         results = indicators.get_chop(
@@ -30,6 +36,6 @@ class ChopinessIndex(Indicator[ChopinessIndexConfig, ChopinessIndexModel]):
         return DataFrame[ChopinessIndexModel](
             {
                 "date_time": [value.date for value in results],
-                "chop": [value.chop for value in results],
+                "chop": [value.chop / 100 for value in results],
             }
         )

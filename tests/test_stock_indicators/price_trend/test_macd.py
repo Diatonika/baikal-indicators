@@ -22,3 +22,4 @@ def test_moving_average_converge_diverge(
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

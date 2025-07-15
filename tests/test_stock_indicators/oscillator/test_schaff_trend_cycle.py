@@ -25,3 +25,4 @@ def test_schaff_trend_cycle(
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

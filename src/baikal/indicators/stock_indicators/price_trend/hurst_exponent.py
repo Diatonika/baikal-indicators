@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class HurstExponentConfig(BaseModel):
@@ -14,13 +14,19 @@ class HurstExponentConfig(BaseModel):
 
 
 class HurstExponentModel(TimeSeries):
-    hurst_exponent: Float64
+    hurst_exponent: Float64  # [0; 1]
 
 
 class HurstExponent(Indicator[HurstExponentConfig, HurstExponentModel]):
     @classmethod
     def model(cls) -> type[HurstExponentModel]:
         return HurstExponentModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "hurst_exponent": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[HurstExponentModel]:
         results = indicators.get_hurst(

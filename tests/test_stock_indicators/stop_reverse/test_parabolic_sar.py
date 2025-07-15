@@ -23,3 +23,4 @@ def test_parabolic_sar(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> N
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class ForceIndexConfig(BaseModel):
@@ -14,14 +14,19 @@ class ForceIndexConfig(BaseModel):
 
 
 class ForceIndexModel(TimeSeries):
-    # Non-normalized
-    force_index: Float64
+    force_index: Float64  # ABSOLUTE
 
 
 class ForceIndex(Indicator[ForceIndexConfig, ForceIndexModel]):
     @classmethod
     def model(cls) -> type[ForceIndexModel]:
         return ForceIndexModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "force_index": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ForceIndexModel]:
         results = indicators.get_force_index(

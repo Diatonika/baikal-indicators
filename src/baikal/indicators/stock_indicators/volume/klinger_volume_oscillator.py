@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class KlingerVolumeOscillatorConfig(BaseModel):
@@ -16,10 +16,8 @@ class KlingerVolumeOscillatorConfig(BaseModel):
 
 
 class KlingerVolumeOscillatorModel(TimeSeries):
-    # Non-normalized
-    klinger_oscillator: Float64
-    # Non-normalized
-    klinger_oscillator_signal: Float64
+    klinger_oscillator: Float64  # ABSOLUTE
+    klinger_oscillator_signal: Float64  # ABSOLUTE
 
 
 class KlingerVolumeOscillator(
@@ -28,6 +26,13 @@ class KlingerVolumeOscillator(
     @classmethod
     def model(cls) -> type[KlingerVolumeOscillatorModel]:
         return KlingerVolumeOscillatorModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "klinger_oscillator": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "klinger_oscillator_signal": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(
         self, quotes: Iterable[Quote]

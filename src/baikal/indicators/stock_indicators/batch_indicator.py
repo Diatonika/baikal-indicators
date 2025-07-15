@@ -37,8 +37,8 @@ class BatchIndicator:
         window_size: datetime.timedelta,
         *,
         parquet_path: Path | None = None,
-        return_frame: Literal[False],
-    ) -> None: ...
+        return_frame: Literal[True] = True,
+    ) -> PolarDataFrame: ...
 
     @overload
     def calculate(
@@ -49,8 +49,8 @@ class BatchIndicator:
         window_size: datetime.timedelta,
         *,
         parquet_path: Path | None = None,
-        return_frame: Literal[True] = True,
-    ) -> PolarDataFrame: ...
+        return_frame: Literal[False] = False,
+    ) -> None: ...
 
     def calculate(
         self,
@@ -152,13 +152,13 @@ class BatchIndicator:
             if writer is not None:
                 writer.write(TimeSeries.validate(aggregated_chunk))
 
-            if return_frame is not None:
+            if return_frame:
                 aggregated_chunks.append(aggregated_chunk)
 
             left_border = window_parameters.next_warmup
 
         progress.update(task, completed=100)
-        return None if return_frame is None else concat(aggregated_chunks)
+        return concat(aggregated_chunks) if return_frame else None
 
     @contextmanager
     def _with_writer(

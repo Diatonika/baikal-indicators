@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import CandlePart, Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class MACDConfig(BaseModel):
@@ -17,17 +17,27 @@ class MACDConfig(BaseModel):
 
 
 class MACDModel(TimeSeries):
-    macd: Float64
-    macd_signal: Float64
-    macd_histogram: Float64
-    macd_fast_ema: Float64
-    macd_slow_ema: Float64
+    macd: Float64  # ABSOLUTE
+    macd_signal: Float64  # ABSOLUTE
+    macd_histogram: Float64  # ABSOLUTE
+    macd_fast_ema: Float64  # ABSOLUTE
+    macd_slow_ema: Float64  # ABSOLUTE
 
 
 class MACD(Indicator[MACDConfig, MACDModel]):
     @classmethod
     def model(cls) -> type[MACDModel]:
         return MACDModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "macd": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "macd_signal": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "macd_histogram": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "macd_fast_ema": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "macd_slow_ema": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[MACDModel]:
         results = indicators.get_macd(

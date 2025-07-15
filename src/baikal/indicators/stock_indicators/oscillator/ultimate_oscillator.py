@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class UltimateOscillatorConfig(BaseModel):
@@ -16,13 +16,19 @@ class UltimateOscillatorConfig(BaseModel):
 
 
 class UltimateOscillatorModel(TimeSeries):
-    ultimate_oscillator: Float64
+    ultimate_oscillator: Float64  # [0; 1]
 
 
 class UltimateOscillator(Indicator[UltimateOscillatorConfig, UltimateOscillatorModel]):
     @classmethod
     def model(cls) -> type[UltimateOscillatorModel]:
         return UltimateOscillatorModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "ultimate_oscillator": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[UltimateOscillatorModel]:
         results = indicators.get_ultimate(
@@ -32,6 +38,6 @@ class UltimateOscillator(Indicator[UltimateOscillatorConfig, UltimateOscillatorM
         return DataFrame[UltimateOscillatorModel](
             {
                 "date_time": [value.date for value in results],
-                "ultimate_oscillator": [value.ultimate for value in results],
+                "ultimate_oscillator": [value.ultimate / 100 for value in results],
             }
         )

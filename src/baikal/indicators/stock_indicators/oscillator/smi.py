@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class SMIConfig(BaseModel):
@@ -17,14 +17,21 @@ class SMIConfig(BaseModel):
 
 
 class SMIModel(TimeSeries):
-    smi: Float64
-    smi_signal: Float64
+    smi: Float64  # [-1; 1]
+    smi_signal: Float64  # [-1; 1]
 
 
 class SMI(Indicator[SMIConfig, SMIModel]):
     @classmethod
     def model(cls) -> type[SMIModel]:
         return SMIModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "smi": FieldMetadata(range_type=RangeType.BOUNDED),
+            "smi_signal": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[SMIModel]:
         results = indicators.get_smi(
@@ -34,7 +41,7 @@ class SMI(Indicator[SMIConfig, SMIModel]):
         return DataFrame[SMIModel](
             {
                 "date_time": [value.date for value in results],
-                "smi": [value.smi for value in results],
-                "smi_signal": [value.signal for value in results],
+                "smi": [value.smi / 100 for value in results],
+                "smi_signal": [value.signal / 100 for value in results],
             }
         )

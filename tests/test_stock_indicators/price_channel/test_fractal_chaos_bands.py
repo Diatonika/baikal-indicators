@@ -25,3 +25,4 @@ def test_fractal_chaos_bands(
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

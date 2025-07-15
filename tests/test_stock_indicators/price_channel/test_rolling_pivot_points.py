@@ -25,3 +25,4 @@ def test_rolling_pivot_points(
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

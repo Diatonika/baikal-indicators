@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class TRIXConfig(BaseModel):
@@ -15,15 +15,23 @@ class TRIXConfig(BaseModel):
 
 
 class TRIXModel(TimeSeries):
-    trix_smooth_ema: Float64
-    trix: Float64
-    trix_signal: Float64
+    trix_smooth_ema: Float64  # ABSOLUTE
+    trix: Float64  # <- -0.02; 0.02 ->
+    trix_signal: Float64  # <- -0.02; 0.02 ->
 
 
 class TRIX(Indicator[TRIXConfig, TRIXModel]):
     @classmethod
     def model(cls) -> type[TRIXModel]:
         return TRIXModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "trix_smooth_ema": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "trix": FieldMetadata(range_type=RangeType.BOUNDED),
+            "trix_signal": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[TRIXModel]:
         results = indicators.get_trix(

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class ChaikinOscillatorConfig(BaseModel):
@@ -15,14 +15,19 @@ class ChaikinOscillatorConfig(BaseModel):
 
 
 class ChaikinOscillatorModel(TimeSeries):
-    # Non-normalized
-    chaikin_oscillator: Float64
+    chaikin_oscillator: Float64  # ABSOLUTE
 
 
 class ChaikinOscillator(Indicator[ChaikinOscillatorConfig, ChaikinOscillatorModel]):
     @classmethod
     def model(cls) -> type[ChaikinOscillatorModel]:
         return ChaikinOscillatorModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "chaikin_oscillator": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ChaikinOscillatorModel]:
         results = indicators.get_chaikin_osc(

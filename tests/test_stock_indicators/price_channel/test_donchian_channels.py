@@ -23,3 +23,4 @@ def test_donchian_channels(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) 
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

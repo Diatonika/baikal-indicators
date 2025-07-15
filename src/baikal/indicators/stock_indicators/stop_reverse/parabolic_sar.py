@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field as PydanticField
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class ParabolicSARConfig(BaseModel):
@@ -18,14 +18,21 @@ class ParabolicSARConfig(BaseModel):
 
 
 class ParabolicSARModel(TimeSeries):
-    sar: Float64
-    sar_reverse: Float32
+    sar: Float64  # ABSOLUTE
+    sar_reverse: Float32  # 0 / 1
 
 
 class ParabolicSAR(Indicator[ParabolicSARConfig, ParabolicSARModel]):
     @classmethod
     def model(cls) -> type[ParabolicSARModel]:
         return ParabolicSARModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "sar": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "sar_reverse": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ParabolicSARModel]:
         results = indicators.get_parabolic_sar(

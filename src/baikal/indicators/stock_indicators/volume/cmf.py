@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class CMFConfig(BaseModel):
@@ -14,18 +14,23 @@ class CMFConfig(BaseModel):
 
 
 class CMFModel(TimeSeries):
-    money_flow_multiplier: Float64
-
-    # Non-normalized
-    money_flow_volume: Float64
-    # Non-normalized
-    cmf: Float64
+    money_flow_multiplier: Float64  # [-1; 1]
+    money_flow_volume: Float64  # ABSOLUTE
+    cmf: Float64  # <- -1; 1 ->
 
 
 class CMF(Indicator[CMFConfig, CMFModel]):
     @classmethod
     def model(cls) -> type[CMFModel]:
         return CMFModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "money_flow_multiplier": FieldMetadata(range_type=RangeType.BOUNDED),
+            "money_flow_volume": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "cmf": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[CMFModel]:
         results = indicators.get_cmf(

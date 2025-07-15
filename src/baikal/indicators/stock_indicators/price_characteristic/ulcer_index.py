@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class UlcerIndexConfig(BaseModel):
@@ -14,13 +14,19 @@ class UlcerIndexConfig(BaseModel):
 
 
 class UlcerIndexModel(TimeSeries):
-    ulcer_index: Float64
+    ulcer_index: Float64  # [0; 0.5 ->
 
 
 class UlcerIndex(Indicator[UlcerIndexConfig, UlcerIndexModel]):
     @classmethod
     def model(cls) -> type[UlcerIndexModel]:
         return UlcerIndexModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "ulcer_index": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[UlcerIndexModel]:
         results = indicators.get_ulcer_index(

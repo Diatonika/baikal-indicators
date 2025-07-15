@@ -11,10 +11,10 @@ from tests.utility.assertions import Assertions
 def test_average_directional_index(
     assertions: Assertions, ohlcv_day: DataFrame[OHLCV]
 ) -> None:
-    adx = ADX(ADXConfig())
-    indicator = BatchIndicator([adx])
+    indicator = ADX(ADXConfig())
+    batch_indicator = BatchIndicator([indicator])
 
-    results = indicator.calculate(
+    results = batch_indicator.calculate(
         ohlcv_day,
         "1m",
         warmup_period=datetime.timedelta(minutes=750),
@@ -22,3 +22,4 @@ def test_average_directional_index(
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

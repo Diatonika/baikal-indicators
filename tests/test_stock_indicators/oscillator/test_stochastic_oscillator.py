@@ -25,3 +25,4 @@ def test_stochastic_oscillator(
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

@@ -6,21 +6,27 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class CCIConfig(BaseModel):
-    lookback_periods: int = 20
+    lookback_periods: int = 50
 
 
 class CCIModel(TimeSeries):
-    cci: Float64
+    cci: Float64  # <- -250; 250 ->
 
 
 class CCI(Indicator[CCIConfig, CCIModel]):
     @classmethod
     def model(cls) -> type[CCIModel]:
         return CCIModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "cci": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[CCIModel]:
         results = indicators.get_cci(

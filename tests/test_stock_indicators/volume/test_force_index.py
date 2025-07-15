@@ -20,3 +20,4 @@ def test_force_index(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> Non
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

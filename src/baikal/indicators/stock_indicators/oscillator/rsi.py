@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class RSIConfig(BaseModel):
@@ -14,13 +14,19 @@ class RSIConfig(BaseModel):
 
 
 class RSIModel(TimeSeries):
-    rsi: Float64
+    rsi: Float64  # [0; 1]
 
 
 class RSI(Indicator[RSIConfig, RSIModel]):
     @classmethod
     def model(cls) -> type[RSIModel]:
         return RSIModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "rsi": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[RSIModel]:
         results = indicators.get_rsi(
@@ -30,6 +36,6 @@ class RSI(Indicator[RSIConfig, RSIModel]):
         return DataFrame[RSIModel](
             {
                 "date_time": [value.date for value in results],
-                "rsi": [value.rsi for value in results],
+                "rsi": [value.rsi / 100 for value in results],
             }
         )

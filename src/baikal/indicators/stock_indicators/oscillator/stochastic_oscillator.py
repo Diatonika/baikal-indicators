@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import MAType, Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class StochasticOscillatorConfig(BaseModel):
@@ -19,9 +19,9 @@ class StochasticOscillatorConfig(BaseModel):
 
 
 class StochasticOscillatorModel(TimeSeries):
-    stochastic_oscillator: Float64
-    stochastic_signal: Float64
-    stochastic_divergence: Float64
+    stochastic_oscillator: Float64  # [0; 1]
+    stochastic_signal: Float64  # [0; 1]
+    stochastic_divergence: Float64  # <- -0.5; 1.5 ->
 
 
 class StochasticOscillator(
@@ -30,6 +30,14 @@ class StochasticOscillator(
     @classmethod
     def model(cls) -> type[StochasticOscillatorModel]:
         return StochasticOscillatorModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "stochastic_oscillator": FieldMetadata(range_type=RangeType.BOUNDED),
+            "stochastic_signal": FieldMetadata(range_type=RangeType.BOUNDED),
+            "stochastic_divergence": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(
         self, quotes: Iterable[Quote]
@@ -41,8 +49,8 @@ class StochasticOscillator(
         return DataFrame[StochasticOscillatorModel](
             {
                 "date_time": [value.date for value in results],
-                "stochastic_oscillator": [value.oscillator for value in results],
-                "stochastic_signal": [value.signal for value in results],
-                "stochastic_divergence": [value.percent_j for value in results],
+                "stochastic_oscillator": [value.oscillator / 100 for value in results],
+                "stochastic_signal": [value.signal / 100 for value in results],
+                "stochastic_divergence": [value.percent_j / 100 for value in results],
             }
         )

@@ -1,6 +1,11 @@
 import datetime
 
+from typing import Any
+
 from polars import DataFrame as PolarDataFrame
+
+from baikal.common.trade.models import TimeSeries
+from baikal.indicators.stock_indicators import Indicator
 
 
 class Assertions:
@@ -19,3 +24,11 @@ class Assertions:
         assert actual["date_time"].last() == datetime.datetime(
             2019, 1, 1, 23, 59, tzinfo=datetime.UTC
         )
+
+    @staticmethod
+    def assert_metadata(indicator: Indicator[Any, Any]) -> None:
+        metadata = indicator.metadata()
+        model = indicator.model()
+
+        indicator_names = set(model.column_names()) - set(TimeSeries.column_names())
+        assert set(metadata) == indicator_names

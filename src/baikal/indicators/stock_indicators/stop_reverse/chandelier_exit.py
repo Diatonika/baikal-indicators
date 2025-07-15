@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import ChandelierType, Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class ChandelierExitConfig(BaseModel):
@@ -15,14 +15,21 @@ class ChandelierExitConfig(BaseModel):
 
 
 class ChandelierExitModel(TimeSeries):
-    chandelier_long: Float64
-    chandelier_short: Float64
+    chandelier_long: Float64  # ABSOLUTE
+    chandelier_short: Float64  # ABSOLUTE
 
 
 class ChandelierExit(Indicator[ChandelierExitConfig, ChandelierExitModel]):
     @classmethod
     def model(cls) -> type[ChandelierExitModel]:
         return ChandelierExitModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "chandelier_long": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "chandelier_short": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ChandelierExitModel]:
         long = self._calculate(quotes, ChandelierType.LONG).rename(

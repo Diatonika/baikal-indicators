@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class BOPConfig(BaseModel):
@@ -14,13 +14,19 @@ class BOPConfig(BaseModel):
 
 
 class BOPModel(TimeSeries):
-    bop: Float64
+    bop: Float64  # [-1; 1]
 
 
 class BOP(Indicator[BOPConfig, BOPModel]):
     @classmethod
     def model(cls) -> type[BOPModel]:
         return BOPModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "bop": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[BOPModel]:
         results = indicators.get_bop(

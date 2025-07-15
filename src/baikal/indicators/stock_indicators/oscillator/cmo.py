@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class CMOConfig(BaseModel):
@@ -14,13 +14,19 @@ class CMOConfig(BaseModel):
 
 
 class CMOModel(TimeSeries):
-    cmo: Float64
+    cmo: Float64  # [-1; 1]
 
 
 class CMO(Indicator[CMOConfig, CMOModel]):
     @classmethod
     def model(cls) -> type[CMOModel]:
         return CMOModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "cmo": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[CMOModel]:
         results = indicators.get_cmo(
@@ -30,6 +36,6 @@ class CMO(Indicator[CMOConfig, CMOModel]):
         return DataFrame[CMOModel](
             {
                 "date_time": [value.date for value in results],
-                "cmo": [value.cmo for value in results],
+                "cmo": [value.cmo / 100 for value in results],
             }
         )

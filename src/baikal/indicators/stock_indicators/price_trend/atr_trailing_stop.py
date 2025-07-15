@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import EndType, Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class ATRTrailingStopConfig(BaseModel):
@@ -16,15 +16,23 @@ class ATRTrailingStopConfig(BaseModel):
 
 
 class ATRTrailingStopModel(TimeSeries):
-    atr_stop: Float64
-    atr_buy_stop: Float32
-    atr_sell_stop: Float32
+    atr_stop: Float64  # ABSOLUTE
+    atr_buy_stop: Float32  # 0 / 1
+    atr_sell_stop: Float32  # 0 / 1
 
 
 class ATRTrailingStop(Indicator[ATRTrailingStopConfig, ATRTrailingStopModel]):
     @classmethod
     def model(cls) -> type[ATRTrailingStopModel]:
         return ATRTrailingStopModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "atr_stop": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "atr_buy_stop": FieldMetadata(range_type=RangeType.BOUNDED),
+            "atr_sell_stop": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ATRTrailingStopModel]:
         results = indicators.get_atr_stop(
@@ -35,7 +43,9 @@ class ATRTrailingStop(Indicator[ATRTrailingStopConfig, ATRTrailingStopModel]):
             {
                 "date_time": [value.date for value in results],
                 "atr_stop": [value.atr_stop for value in results],
-                "atr_buy_stop": [int(value.buy_stop is None) for value in results],
-                "atr_sell_stop": [int(value.sell_stop is None) for value in results],
+                "atr_buy_stop": [int(value.buy_stop is not None) for value in results],
+                "atr_sell_stop": [
+                    int(value.sell_stop is not None) for value in results
+                ],
             }
         )

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class DonchianChannelsConfig(BaseModel):
@@ -14,16 +14,25 @@ class DonchianChannelsConfig(BaseModel):
 
 
 class DonchianChannelsModel(TimeSeries):
-    donchian_upper: Float64
-    donchian_center: Float64
-    donchian_lower: Float64
-    donchian_width: Float64
+    donchian_upper: Float64  # ABSOLUTE
+    donchian_center: Float64  # ABSOLUTE
+    donchian_lower: Float64  # ABSOLUTE
+    donchian_width: Float64  # [0; 0.5 ->
 
 
 class DonchianChannels(Indicator[DonchianChannelsConfig, DonchianChannelsModel]):
     @classmethod
     def model(cls) -> type[DonchianChannelsModel]:
         return DonchianChannelsModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "donchian_upper": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "donchian_center": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "donchian_lower": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "donchian_width": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[DonchianChannelsModel]:
         results = indicators.get_donchian(

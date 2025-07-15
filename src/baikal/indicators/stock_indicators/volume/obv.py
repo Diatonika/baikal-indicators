@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class OBVConfig(BaseModel):
@@ -14,7 +14,6 @@ class OBVConfig(BaseModel):
 
 
 class OBVModel(TimeSeries):
-    # Non-normalized
     obv_sma: Float64
 
 
@@ -22,6 +21,12 @@ class OBV(Indicator[OBVConfig, OBVModel]):
     @classmethod
     def model(cls) -> type[OBVModel]:
         return OBVModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "obv_sma": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[OBVModel]:
         results = indicators.get_obv(

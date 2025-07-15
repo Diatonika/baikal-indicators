@@ -33,7 +33,7 @@ from baikal.indicators.stock_indicators.price_trend.ichimoku_cloud import (
     IchimokuCloudConfig,
     IchimokuCloudModel,
 )
-from baikal.indicators.stock_indicators.price_trend.moving_average_converge_diverge import (
+from baikal.indicators.stock_indicators.price_trend.macd import (
     MACD,
     MACDConfig,
     MACDModel,

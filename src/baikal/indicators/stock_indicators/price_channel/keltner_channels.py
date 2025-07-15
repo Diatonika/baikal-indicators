@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class KeltnerChannelsConfig(BaseModel):
@@ -16,16 +16,25 @@ class KeltnerChannelsConfig(BaseModel):
 
 
 class KeltnerChannelsModel(TimeSeries):
-    keltner_upper: Float64
-    keltner_center: Float64
-    keltner_lower: Float64
-    keltner_width: Float64
+    keltner_upper: Float64  # ABSOLUTE
+    keltner_center: Float64  # ABSOLUTE
+    keltner_lower: Float64  # ABSOLUTE
+    keltner_width: Float64  # [0; 0.5 ->
 
 
 class KeltnerChannels(Indicator[KeltnerChannelsConfig, KeltnerChannelsModel]):
     @classmethod
     def model(cls) -> type[KeltnerChannelsModel]:
         return KeltnerChannelsModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "keltner_upper": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "keltner_center": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "keltner_lower": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "keltner_width": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[KeltnerChannelsModel]:
         results = indicators.get_keltner(

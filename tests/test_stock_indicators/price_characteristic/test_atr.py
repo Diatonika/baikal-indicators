@@ -20,3 +20,4 @@ def test_atr(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:
     )
 
     assertions.day_test_assertions(results)
+    assertions.assert_metadata(indicator)

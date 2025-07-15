@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class ADLConfig(BaseModel):
@@ -14,14 +14,19 @@ class ADLConfig(BaseModel):
 
 
 class ADLModel(TimeSeries):
-    # Non-normalized
-    adl_sma: Float64
+    adl_sma: Float64  # ABSOLUTE
 
 
 class ADL(Indicator[ADLConfig, ADLModel]):
     @classmethod
     def model(cls) -> type[ADLModel]:
         return ADLModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "adl_sma": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ADLModel]:
         results = indicators.get_adl(

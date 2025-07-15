@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class BollingerBandsConfig(BaseModel):
@@ -15,18 +15,29 @@ class BollingerBandsConfig(BaseModel):
 
 
 class BollingerBandsModel(TimeSeries):
-    bollinger_sma: Float64
-    bollinger_upper_band: Float64
-    bollinger_lower_band: Float64
-    bollinger_percent_band: Float64
-    bollinger_z_score: Float64
-    bollinger_width: Float64
+    bollinger_sma: Float64  # ABSOLUTE
+    bollinger_upper_band: Float64  # ABSOLUTE
+    bollinger_lower_band: Float64  # ABSOLUTE
+    bollinger_percent_band: Float64  # <- -1; 1 ->
+    bollinger_z_score: Float64  # <- -3; 3 ->
+    bollinger_width: Float64  # [0; 0.3 ->
 
 
 class BollingerBands(Indicator[BollingerBandsConfig, BollingerBandsModel]):
     @classmethod
     def model(cls) -> type[BollingerBandsModel]:
         return BollingerBandsModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "bollinger_sma": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "bollinger_upper_band": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "bollinger_lower_band": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "bollinger_percent_band": FieldMetadata(range_type=RangeType.BOUNDED),
+            "bollinger_z_score": FieldMetadata(range_type=RangeType.BOUNDED),
+            "bollinger_width": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[BollingerBandsModel]:
         results = indicators.get_bollinger_bands(

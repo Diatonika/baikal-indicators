@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class FractalChaosBandsConfig(BaseModel):
@@ -14,14 +14,21 @@ class FractalChaosBandsConfig(BaseModel):
 
 
 class FractalChaosBandsModel(TimeSeries):
-    fractal_chaos_upper: Float64
-    fractal_chaos_lower: Float64
+    fractal_chaos_upper: Float64  # ABSOLUTE
+    fractal_chaos_lower: Float64  # ABSOLUTE
 
 
 class FractalChaosBands(Indicator[FractalChaosBandsConfig, FractalChaosBandsModel]):
     @classmethod
     def model(cls) -> type[FractalChaosBandsModel]:
         return FractalChaosBandsModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "fractal_chaos_upper": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "fractal_chaos_lower": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[FractalChaosBandsModel]:
         results = indicators.get_fcb(

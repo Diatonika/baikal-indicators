@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class VolatilityStopConfig(BaseModel):
@@ -15,16 +15,25 @@ class VolatilityStopConfig(BaseModel):
 
 
 class VolatilityStopModel(TimeSeries):
-    volatility_stop: Float64
-    volatility_stop_reverse: Float32
-    volatility_stop_upper: Float32
-    volatility_stop_lower: Float32
+    volatility_stop: Float64  # ABSOLUTE
+    volatility_stop_reverse: Float32  # 0 / 1
+    volatility_stop_upper: Float32  # 0 / 1
+    volatility_stop_lower: Float32  # 0 / 1
 
 
 class VolatilityStop(Indicator[VolatilityStopConfig, VolatilityStopModel]):
     @classmethod
     def model(cls) -> type[VolatilityStopModel]:
         return VolatilityStopModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "volatility_stop": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "volatility_stop_reverse": FieldMetadata(range_type=RangeType.BOUNDED),
+            "volatility_stop_upper": FieldMetadata(range_type=RangeType.BOUNDED),
+            "volatility_stop_lower": FieldMetadata(range_type=RangeType.BOUNDED),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[VolatilityStopModel]:
         results = indicators.get_volatility_stop(
@@ -40,10 +49,10 @@ class VolatilityStop(Indicator[VolatilityStopConfig, VolatilityStopModel]):
                     for value in results
                 ],
                 "volatility_stop_upper": [
-                    int(value.upper_band is None) for value in results
+                    int(value.upper_band is not None) for value in results
                 ],
                 "volatility_stop_lower": [
-                    int(value.lower_band is None) for value in results
+                    int(value.lower_band is not None) for value in results
                 ],
             }
         )

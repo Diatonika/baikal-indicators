@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field as PydanticField
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class IchimokuCloudConfig(BaseModel):
@@ -24,16 +24,25 @@ class IchimokuCloudConfig(BaseModel):
 
 
 class IchimokuCloudModel(TimeSeries):
-    tenkan_sen: Float64
-    kijun_sen: Float64
-    senkou_span_a: Float64
-    senkou_span_b: Float64
+    tenkan_sen: Float64  # ABSOLUTE
+    kijun_sen: Float64  # ABSOLUTE
+    senkou_span_a: Float64  # ABSOLUTE
+    senkou_span_b: Float64  # ABSOLUTE
 
 
 class IchimokuCloud(Indicator[IchimokuCloudConfig, IchimokuCloudModel]):
     @classmethod
     def model(cls) -> type[IchimokuCloudModel]:
         return IchimokuCloudModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "tenkan_sen": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "kijun_sen": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "senkou_span_a": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "senkou_span_b": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[IchimokuCloudModel]:
         results = indicators.get_ichimoku(

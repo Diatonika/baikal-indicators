@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class ElderRayConfig(BaseModel):
@@ -14,15 +14,23 @@ class ElderRayConfig(BaseModel):
 
 
 class ElderRayModel(TimeSeries):
-    elder_ray_ema: Float64
-    elder_ray_bull: Float64
-    elder_ray_bear: Float64
+    elder_ray_ema: Float64  # ABSOLUTE
+    elder_ray_bull: Float64  # ABSOLUTE
+    elder_ray_bear: Float64  # ABSOLUTE
 
 
 class ElderRay(Indicator[ElderRayConfig, ElderRayModel]):
     @classmethod
     def model(cls) -> type[ElderRayModel]:
         return ElderRayModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "elder_ray_ema": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "elder_ray_bull": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "elder_ray_bear": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[ElderRayModel]:
         results = indicators.get_elder_ray(

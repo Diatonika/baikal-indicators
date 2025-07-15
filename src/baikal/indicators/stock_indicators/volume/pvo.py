@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from stock_indicators import Quote, indicators
 
 from baikal.common.trade.models import TimeSeries
-from baikal.indicators.stock_indicators import Indicator
+from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 
 class PVOConfig(BaseModel):
@@ -16,15 +16,23 @@ class PVOConfig(BaseModel):
 
 
 class PVOModel(TimeSeries):
-    pvo: Float64
-    pvo_signal: Float64
-    pvo_histogram: Float64
+    pvo: Float64  # ABSOLUTE
+    pvo_signal: Float64  # ABSOLUTE
+    pvo_histogram: Float64  # ABSOLUTE
 
 
 class PVO(Indicator[PVOConfig, PVOModel]):
     @classmethod
     def model(cls) -> type[PVOModel]:
         return PVOModel
+
+    @classmethod
+    def metadata(cls) -> dict[str, FieldMetadata]:
+        return {
+            "pvo": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "pvo_signal": FieldMetadata(range_type=RangeType.ABSOLUTE),
+            "pvo_histogram": FieldMetadata(range_type=RangeType.ABSOLUTE),
+        }
 
     def calculate(self, quotes: Iterable[Quote]) -> DataFrame[PVOModel]:
         results = indicators.get_pvo(
