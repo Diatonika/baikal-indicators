@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v0.2.0 (2025-08-21)
+
+### Features
+
+- **stock-indicators**: Support trivial OHLCV passthrough indicator, remove baikal-converters
+  dependency and bump baikal-commons to 0.15
+  ([#2](https://github.com/Diatonika/baikal-indicators/pull/2),
+  [`1246104`](https://github.com/Diatonika/baikal-indicators/commit/124610487f7614a682d87d5cb38e6853f62b4c14))
+
+
 ## v0.1.0 (2025-07-15)
 
 ### Features
