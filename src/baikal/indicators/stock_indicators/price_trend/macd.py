@@ -5,7 +5,7 @@ from polars import Float64
 from pydantic import BaseModel
 from stock_indicators import CandlePart, Quote, indicators
 
-from baikal.common.trade.models import TimeSeries
+from baikal.common.models import TimeSeries
 from baikal.indicators.stock_indicators import FieldMetadata, Indicator, RangeType
 
 

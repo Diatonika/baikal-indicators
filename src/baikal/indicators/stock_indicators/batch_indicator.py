@@ -10,13 +10,13 @@ from pandera.typing.polars import DataFrame
 from polars import DataFrame as PolarDataFrame, col, concat
 from rich.progress import Progress
 
-from baikal.common.rich import with_handler
-from baikal.common.rich.progress import DateTimeColumn, TimeFraction
-from baikal.common.trade.models import OHLCV, TimeSeries
-from baikal.common.trade.parquet import (
+from baikal.common.dataset.parquet import (
     ParquetTimeSeriesPartition,
     ParquetTimeSeriesWriter,
 )
+from baikal.common.models import OHLCV, TimeSeries
+from baikal.common.rich import with_handler
+from baikal.common.rich.progress import DateTimeColumn, TimeFraction
 from baikal.indicators.stock_indicators._window_validator import validate_window
 from baikal.indicators.stock_indicators.indicator import FieldMetadata, Indicator
 from baikal.indicators.stock_indicators.transform import to_quotes
@@ -94,7 +94,7 @@ class BatchIndicator:
         window_size: datetime.timedelta,
         *,
         progress: Progress,
-        writer: ParquetTimeSeriesWriter[TimeSeries] | None,
+        writer: ParquetTimeSeriesWriter | None,
         return_frame: bool,
     ) -> PolarDataFrame | None:
         aggregated_chunks: list[PolarDataFrame] = []
@@ -144,7 +144,7 @@ class BatchIndicator:
                 indicator.calculate(quotes) for indicator in self._indicators
             ]
 
-            chunks = [chunk] + indicators_chunk
+            chunks = [chunk.select("date_time")] + indicators_chunk
             aggregated_chunk = concat(chunks, how="align_left").filter(
                 col("date_time") >= warmup_border,
             )
@@ -170,16 +170,14 @@ class BatchIndicator:
     @contextmanager
     def _with_writer(
         self, parquet_path: Path | None
-    ) -> Generator[ParquetTimeSeriesWriter[TimeSeries] | None, None, None]:
+    ) -> Generator[ParquetTimeSeriesWriter | None, None, None]:
         if parquet_path is None:
             yield None
             return None
 
-        writer = ParquetTimeSeriesWriter[TimeSeries](
+        with ParquetTimeSeriesWriter(
             parquet_path, ParquetTimeSeriesPartition.MONTH
-        )
-
-        with writer:
+        ) as writer:
             yield writer
 
         return None

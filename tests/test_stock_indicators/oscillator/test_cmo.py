@@ -2,7 +2,7 @@ import datetime
 
 from pandera.typing.polars import DataFrame
 
-from baikal.common.trade.models import OHLCV
+from baikal.common.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator
 from baikal.indicators.stock_indicators.oscillator import CMO, CMOConfig
 from tests.utility.assertions import Assertions

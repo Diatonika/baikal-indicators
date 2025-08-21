@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from pandera.typing.polars import DataFrame
 from stock_indicators import Quote
 
-from baikal.common.trade.models import OHLCV
+from baikal.common.models import OHLCV
 
 
 def to_quotes(ohlcv: DataFrame[OHLCV]) -> Sequence[Quote]:
