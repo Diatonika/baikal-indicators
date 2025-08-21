@@ -4,12 +4,15 @@ from pandera.typing.polars import DataFrame
 
 from baikal.common.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator
-from baikal.indicators.stock_indicators.oscillator import TRIX, TRIXConfig
+from baikal.indicators.stock_indicators.basic import (
+    OHLCVIndicator,
+    OHLCVIndicatorConfig,
+)
 from tests.utility.assertions import Assertions
 
 
-def test_trix(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:
-    indicator = TRIX(TRIXConfig())
+def test_ohlcv(assertions: Assertions, ohlcv_day: DataFrame[OHLCV]) -> None:
+    indicator = OHLCVIndicator(OHLCVIndicatorConfig())
     batch_indicator = BatchIndicator([indicator])
 
     results = batch_indicator.calculate(

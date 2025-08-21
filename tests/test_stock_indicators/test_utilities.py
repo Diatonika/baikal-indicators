@@ -5,14 +5,7 @@ from pathlib import Path
 from pandera.typing.polars import DataFrame
 from polars import DataFrame as PolarDataFrame, read_parquet
 
-from baikal.common.trade.models import OHLCV
-from baikal.converters.binance import (
-    BinanceConverter,
-    BinanceDataConfig,
-    BinanceDataInterval,
-    BinanceDataType,
-    BinanceInstrumentType,
-)
+from baikal.common.models import OHLCV
 from baikal.indicators.stock_indicators import BatchIndicator, to_quotes
 from baikal.indicators.stock_indicators.price_trend import (
     ADX,
@@ -28,19 +21,7 @@ def test_to_quotes(ohlcv_month: DataFrame[OHLCV]) -> None:
 
 
 def test_batch_indicator(tmp_path: Path, global_datadir: Path) -> None:
-    converter = BinanceConverter(global_datadir)
-    lazy_ohlcv = converter.load_ohlcv(
-        BinanceDataConfig(
-            BinanceDataType.OHLCV,
-            BinanceInstrumentType.SPOT,
-            BinanceDataInterval.ONE_MINUTE,
-            "BTCUSDT",
-        ),
-        datetime.datetime(2020, 3, 4, tzinfo=datetime.UTC),
-        datetime.datetime(2020, 3, 5, tzinfo=datetime.UTC),
-    )
-
-    ohlcv = DataFrame[OHLCV](lazy_ohlcv.collect())
+    ohlcv = DataFrame[OHLCV](read_parquet(global_datadir / "2020-03-04.parquet"))
 
     atr_trailing_stop = ATRTrailingStop(ATRTrailingStopConfig())
     batch_indicator = BatchIndicator([atr_trailing_stop])
@@ -82,7 +63,7 @@ def test_batch_indicator(tmp_path: Path, global_datadir: Path) -> None:
     )
 
     _asserts(memory_results)
-    _asserts(read_parquet(tmp_path / "parquet"))
+    _asserts(read_parquet(tmp_path / "**" / "*.parquet", glob=True))
 
 
 def test_batch_indicator_metadata() -> None:

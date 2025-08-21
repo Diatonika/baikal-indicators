@@ -4,7 +4,7 @@ from typing import Any
 
 from polars import DataFrame as PolarDataFrame
 
-from baikal.common.trade.models import TimeSeries
+from baikal.common.models import TimeSeries
 from baikal.indicators.stock_indicators import Indicator
 
 

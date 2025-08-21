@@ -7,7 +7,7 @@ from pandera.typing.polars import DataFrame
 from pydantic import BaseModel
 from stock_indicators import Quote
 
-from baikal.common.trade.models import TimeSeries
+from baikal.common.models import TimeSeries
 
 
 class RangeType(StrEnum):

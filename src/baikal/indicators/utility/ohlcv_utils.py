@@ -1,7 +1,7 @@
 from pandera.typing.polars import LazyFrame
 from polars import col
 
-from baikal.common.trade.models import OHLCV
+from baikal.common.models import OHLCV
 
 
 class OHLCVUtils:
